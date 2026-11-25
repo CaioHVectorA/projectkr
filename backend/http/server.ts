@@ -5,6 +5,7 @@ import {
   config,
   getPublicSettings,
   hasConfiguredRiotKey,
+  isCompiledBinary,
   updateRuntimeSettings,
   type SettingsUpdateInput,
 } from "../config";
@@ -251,14 +252,46 @@ export async function handleRequest(req: Request): Promise<Response> {
   }
 }
 
+function openBrowserUrl(targetUrl: string): void {
+  try {
+    if (process.platform === "win32") {
+      // Usa Shell API nativa do Windows (sem cmd.exe e sem .bat)
+      Bun.spawn(["rundll32", "url.dll,FileProtocolHandler", targetUrl], {
+        stdout: "ignore",
+        stderr: "ignore",
+        stdin: "ignore",
+        windowsHide: true,
+      });
+    } else if (process.platform === "darwin") {
+      Bun.spawn(["open", targetUrl], {
+        stdout: "ignore",
+        stderr: "ignore",
+        stdin: "ignore",
+      });
+    } else {
+      Bun.spawn(["xdg-open", targetUrl], {
+        stdout: "ignore",
+        stderr: "ignore",
+        stdin: "ignore",
+      });
+    }
+  } catch {
+    // Se não conseguir abrir automaticamente, o usuário abre manualmente pelo link no terminal
+  }
+}
+
 if (import.meta.main) {
+  // Bind estrito em 127.0.0.1 (loopback): 100% local e evita alerta do Windows Firewall
   const server = Bun.serve({
+    hostname: "127.0.0.1",
     port: config.port,
     fetch: handleRequest,
   });
 
+  const appUrl = `http://localhost:${server.port}`;
+
   console.log("==========================================================");
-  console.log(`  PROJETO LOOT v0.3.0 rodando em http://localhost:${server.port}`);
+  console.log(`  PROJETO LOOT v0.3.1 rodando em ${appUrl}`);
   console.log(
     `  Riot API Key: ${
       hasConfiguredRiotKey()
@@ -271,5 +304,10 @@ if (import.meta.main) {
       config.agyTimeoutMs / 1000
     )}s)`
   );
+  console.log("  Pressione Ctrl+C ou feche esta janela para encerrar.");
   console.log("==========================================================");
+
+  if (isCompiledBinary && process.env.LOOT_NO_BROWSER !== "1") {
+    setTimeout(() => openBrowserUrl(appUrl), 600);
+  }
 }

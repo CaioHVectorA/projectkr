@@ -1,6 +1,6 @@
 {
   "name": "projeto-loot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Sistema Especialista de Análise Tática de League of Legends via Antigravity Local (agy)",
   "type": "module",
   "scripts": {
@@ -8,7 +8,7 @@
     "start": "bun run backend/http/server.ts",
     "test": "bun test",
     "typecheck": "bunx tsc --noEmit",
-    "build:win": "bun build backend/http/server.ts --compile --target=bun-windows-x64 --outfile dist/projeto-loot-win-x64.exe",
+    "build:win": "bun build backend/http/server.ts --compile --target=bun-windows-x64 --outfile dist/ProjetoLoot-win-x64.exe",
     "build:linux": "bun build backend/http/server.ts --compile --target=bun-linux-x64 --outfile dist/projeto-loot-linux-x64"
   },
   "devDependencies": {

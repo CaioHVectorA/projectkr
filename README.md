@@ -36,12 +36,11 @@ projectkr/
 
 ---
 
-## Opção 1 — Testar Rápido pelo Release do GitHub (Windows 10/11, sem instalar nada)
+## Opção 1 — Testar Rápido pelo Release do GitHub (Windows 10/11 — Executável Único `.exe`)
 
-1. Baixe `projeto-loot-v0.3.0-win-x64.zip` na aba **Releases** do repositório.
-2. Extraia a pasta em qualquer diretório do seu PC.
-3. Dê dois cliques em **`INICIAR_PROJETO_LOOT.bat`** — o app abre automaticamente em **`http://localhost:3000`**.
-4. *(Opcional)* Clique em **Configurações** no topo da tela para colar sua Riot API Key, definir seu Riot ID padrão, testar a chave em 1 clique ou ajustar o CLI `agy` (tudo é salvo automaticamente em `data/settings.json`, **zero `.env`**). Sem chave, o **Modo Demo (Mock)** e **Simular Evento Live** já funcionam na hora.
+1. Baixe **`ProjetoLoot-v0.3.1-win-x64.exe`** na aba **Releases** do repositório (**sem `.bat`, sem `.zip`, sem `.env`**).
+2. Dê dois cliques no `.exe` — o servidor sobe localmente em `127.0.0.1:3000` (loopback, evitando alertas de firewall) e abre automaticamente o navegador em **`http://localhost:3000`**.
+3. *(Opcional)* Clique em **Configurações** no topo da tela para colar sua Riot API Key, definir seu Riot ID padrão, testar a chave em 1 clique ou ajustar o CLI `agy` (salvo automaticamente em `data/settings.json`). Sem chave, o **Modo Demo (Mock)** e **Simular Evento Live** já funcionam na hora.
 
 ---
 

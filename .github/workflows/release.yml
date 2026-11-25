@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag do release (ex: v0.2.0)"
+        description: "Tag do release (ex: v0.3.1)"
         required: true
-        default: "v0.2.0"
+        default: "v0.3.1"
 
 permissions:
   contents: write
@@ -32,33 +32,13 @@ jobs:
       - name: Build Windows x64 standalone executable
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          bun run build:win
-
-      - name: Package Windows release zip
-        shell: pwsh
-        run: |
           $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
-          $pkgDir = "dist/projeto-loot-$tag-win-x64"
-          New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
-
-          Copy-Item "dist/projeto-loot-win-x64.exe" "$pkgDir/projeto-loot-win-x64.exe"
-          Copy-Item "README.md" "$pkgDir/README.md"
-
-          $bat = @"
-          @echo off
-          title PROJETO LOOT - Coach Tatico Local (BR1)
-          echo Iniciando PROJETO LOOT em http://localhost:3000 ...
-          start "" cmd /c "timeout /t 2 /nobreak >nul && start http://localhost:3000"
-          "%~dp0projeto-loot-win-x64.exe"
-          pause
-          "@
-          Set-Content -Path "$pkgDir/INICIAR_PROJETO_LOOT.bat" -Value $bat -Encoding ASCII
-
-          $zipPath = "dist/projeto-loot-$tag-win-x64.zip"
-          Compress-Archive -Path $pkgDir -DestinationPath $zipPath -Force
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $exePath = "dist/ProjetoLoot-$tag-win-x64.exe"
+          bun build backend/http/server.ts --compile --target=bun-windows-x64 --outfile $exePath
           Write-Output "TAG=$tag" >> $env:GITHUB_ENV
-          Write-Output "ZIP_PATH=$zipPath" >> $env:GITHUB_ENV
+          Write-Output "EXE_PATH=$exePath" >> $env:GITHUB_ENV
+          Write-Output "EXE_NAME=ProjetoLoot-$tag-win-x64.exe" >> $env:GITHUB_ENV
 
       - name: Create GitHub Release
         env:
@@ -66,21 +46,22 @@ jobs:
         shell: pwsh
         run: |
           $notes = @"
-          ## PROJETO LOOT $env:TAG (Windows x64 Standalone — Zero .env)
+          ## PROJETO LOOT $env:TAG — Executável Único Windows (.exe)
 
-          Versão 100% amigável para Windows 10/11 — **sem precisar instalar Bun/Node e sem editar arquivos .env**. Tudo é configurado direto na interface do app.
+          **Sem `.bat`, sem `.zip`, sem `.env`, sem instalar Bun/Node.**
+          Basta baixar o executável único e dar dois cliques.
 
-          ### Como usar em 2 passos (Windows 10/11)
-          1. Baixe e extraia ``projeto-loot-$env:TAG-win-x64.zip``.
-          2. Dê dois cliques em **``INICIAR_PROJETO_LOOT.bat``** — o app abre automaticamente em ``http://localhost:3000``.
-          3. *(Opcional)* Clique em **Configurações** no topo da tela para colar sua Riot API Key, definir seu Riot ID padrão, testar a chave em 1 clique ou ajustar o CLI ``agy``. Sem chave, o **Modo Demo (Mock)** e **Simular Evento Live** já funcionam na hora.
+          ### Como usar
+          1. Baixe **``$env:EXE_NAME``** abaixo.
+          2. Dê dois cliques no arquivo — o servidor sobe em ``127.0.0.1:3000`` (loopback local, evitando alertas de firewall de rede) e abre automaticamente o navegador em ``http://localhost:3000``.
+          3. Clique em **Configurações** no topo da tela para colar sua Riot API Key e seu Riot ID padrão (ou teste imediatamente usando **Modo Demo (Mock)** e **Simular Evento Live**).
 
-          ### O que está incluído
-          - **Configurações 100% In-App:** Riot API Key (com botão Testar Chave e mascaramento), Riot ID padrão, Servidor, CLI ``agy`` (caminho, modo ``arg|stdin``, timeout) e intervalos do Live Coach salvos automaticamente em ``data/settings.json``.
-          - **Arquitetura em Camadas:** Camada de Dados (``backend/data/``), Camada de Domínio (``backend/domain/``), Camada de IA (``backend/ai/``) e Camada HTTP (``backend/http/``).
-          - **Lente 1 — Autópsia Pós-Jogo:** busca por Riot ID, histórico das últimas 10 partidas com filtro de fila, Data Dragon ``pt_BR``, condensador da Timeline (``< 6KB``) e 4 blocos analíticos.
-          - **Lente 2 — Live Coach (Read-Only):** polling a cada ``12s`` em ``127.0.0.1:2999``, loop silencioso por deltas (cooldown ``60s``), avisos de **máximo 2 linhas**, botão **MUTE**, histórico e **Simular Evento Live**.
+          ### Novidades desta versão
+          - **Executável único ``.exe``:** substituído o ``.bat`` por abertura automática do navegador direto pelo executável (via Shell API nativa do Windows, sem ``cmd.exe``).
+          - **Bind estrito em ``127.0.0.1``:** não expõe porta para a rede externa e evita bloqueios do Windows Defender Firewall.
+          - **Configurações 100% In-App:** salvas localmente em ``data/settings.json`` ao lado do ``.exe``.
+          - **Lente 1 (Autópsia Pós-Jogo)** + **Lente 2 (Live Coach Read-Only)**.
           "@
-          gh release create "$env:TAG" "$env:ZIP_PATH" `
-            --title "PROJETO LOOT $env:TAG — Configurações In-App + Lente 1 + Live Coach" `
+          gh release create "$env:TAG" "$env:EXE_PATH" `
+            --title "PROJETO LOOT $env:TAG — Executável Único Windows (.exe)" `
             --notes $notes

@@ -58,7 +58,7 @@ export interface AppConfig {
 
 // Quando compilado com `bun build --compile`, import.meta.dir aponta para `/$bunfs/...`.
 // Nesse caso usamos process.cwd() para armazenar /data ao lado do executável.
-const isCompiledBinary =
+export const isCompiledBinary =
   import.meta.dir.startsWith("/$bunfs") ||
   import.meta.dir.includes("\\$bunfs") ||
   import.meta.dir.includes("/$bunfs");
