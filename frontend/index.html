@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PROJETO LOOT — Coach Tático Local (BR1)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="antialiased selection:bg-[#c8aa6e]/30 selection:text-[#f0e6d2]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <!-- HEADER -->
+      <header
+        class="hex-panel rounded-xl px-5 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      >
+        <div class="flex items-center gap-3.5">
+          <div
+            class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#c8aa6e] to-[#5e4720] flex items-center justify-center text-[#070a0f] font-bold text-lg shadow-lg"
+          >
+            L
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5">
+              <h1 class="text-lg font-bold tracking-wide text-[#f0e6d2]">
+                PROJETO LOOT
+              </h1>
+              <span
+                class="font-mono-tech text-[11px] px-2 py-0.5 rounded bg-[#0ac8b9]/15 text-[#0ac8b9] border border-[#0ac8b9]/30"
+                >BR1 • LOCAL AGY</span
+              >
+            </div>
+            <p class="text-xs text-[#8b9bb4]">
+              Sistema Especialista de Análise Tática de League of Legends — 100% Local
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 text-xs">
+          <div
+            id="healthBadges"
+            class="flex flex-wrap items-center gap-2 font-mono-tech"
+          >
+            <span
+              class="px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-[#8b9bb4]"
+              >Carregando diagnóstico...</span
+            >
+          </div>
+
+          <div class="h-5 w-px bg-white/10 hidden sm:block"></div>
+
+          <!-- Toggle Modo Demo (Mock) -->
+          <label
+            class="flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 rounded-lg bg-white/5 border border-[#c8aa6e]/25 hover:border-[#c8aa6e]/50 transition"
+            title="Usa partida e timeline realistas em /data/mock/ sem precisar de Riot API Key"
+          >
+            <input
+              id="toggleMockData"
+              type="checkbox"
+              class="accent-[#c8aa6e] w-3.5 h-3.5"
+            />
+            <span class="font-medium text-[#f0e6d2]">Modo Demo (Mock)</span>
+          </label>
+
+          <label
+            id="mockAgyWrapper"
+            class="flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/25 transition"
+            title="Simula também a resposta do CLI agy sem executar o processo local"
+          >
+            <input
+              id="toggleMockAgy"
+              type="checkbox"
+              class="accent-[#0ac8b9] w-3.5 h-3.5"
+            />
+            <span class="text-[#8b9bb4]">Simular AGY</span>
+          </label>
+        </div>
+      </header>
+
+      <!-- LENTE 1: CONTROLES DE BUSCA -->
+      <section class="hex-panel hex-panel-accent rounded-xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <span
+              class="font-mono-tech text-[11px] uppercase tracking-widest text-[#c8aa6e]"
+              >Lente 1 • Prioridade Máxima</span
+            >
+            <h2 class="text-base font-semibold text-[#f0e6d2]">
+              Autópsia Pós-Jogo (Match-v5 + Timeline Condensada)
+            </h2>
+          </div>
+          <span class="text-xs text-[#8b9bb4]"
+            >Cache local automático em <code class="font-mono-tech text-[#c8aa6e]">/data/cache</code></span
+          >
+        </div>
+
+        <form id="searchForm" class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-5">
+            <label
+              for="riotIdInput"
+              class="block text-[11px] uppercase tracking-wider text-[#8b9bb4] mb-1"
+              >Riot ID (Nome#TAG)</label
+            >
+            <input
+              id="riotIdInput"
+              type="text"
+              placeholder="Ex: Faker#BR1"
+              value="FakerDemo#BR1"
+              class="hex-input w-full rounded-lg px-3.5 py-2.5 text-sm font-medium"
+            />
+          </div>
+
+          <div class="md:col-span-3">
+            <label
+              for="queueFilter"
+              class="block text-[11px] uppercase tracking-wider text-[#8b9bb4] mb-1"
+              >Filtro de Fila</label
+            >
+            <select
+              id="queueFilter"
+              class="hex-input w-full rounded-lg px-3 py-2.5 text-sm"
+            >
+              <option value="all">Todas as Filas</option>
+              <option value="soloq">Ranked Solo/Duo</option>
+              <option value="flex">Ranked Flex</option>
+              <option value="normal">Normal / ARAM</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-4 flex items-end gap-2">
+            <button
+              id="btnListMatches"
+              type="button"
+              class="hex-btn-secondary flex-1 rounded-lg px-3.5 py-2.5 text-sm font-semibold"
+            >
+              Histórico (10)
+            </button>
+            <button
+              id="btnAnalyzeLatest"
+              type="submit"
+              class="hex-btn-primary flex-1 rounded-lg px-3.5 py-2.5 text-sm"
+            >
+              Analisar Última Partida
+            </button>
+          </div>
+        </form>
+
+        <!-- BANNER DE ERRO / SUGESTÃO DE MOCK -->
+        <div
+          id="errorBanner"
+          class="hidden rounded-lg border border-[#e84057]/40 bg-[#e84057]/10 px-4 py-3 text-sm text-[#ffd5dc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+        >
+          <div id="errorText" class="leading-relaxed"></div>
+          <button
+            id="btnQuickMock"
+            type="button"
+            class="hidden shrink-0 px-3 py-1.5 rounded-md bg-[#c8aa6e] text-[#070a0f] font-semibold text-xs hover:brightness-110 transition"
+          >
+            Ativar Modo Demo e Testar
+          </button>
+        </div>
+      </section>
+
+      <!-- HISTÓRICO DE PARTIDAS (ATÉ 10) -->
+      <section id="historySection" class="hidden hex-panel rounded-xl p-5 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-[#f0e6d2]">
+            Partidas Recentes
+            <span id="historyAccountTag" class="font-mono-tech text-xs text-[#8b9bb4] ml-2"></span>
+          </h3>
+          <span class="text-xs text-[#8b9bb4]"
+            >Clique em <strong>Autopsiar</strong> em qualquer partida</span
+          >
+        </div>
+        <div
+          id="historyList"
+          class="grid grid-cols-1 md:grid-cols-2 gap-2.5 max-h-[340px] overflow-y-auto pr-1"
+        ></div>
+      </section>
+
+      <!-- LOADING STATE DA AUTÓPSIA -->
+      <section id="loadingSection" class="hidden hex-panel rounded-xl p-6 space-y-4">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-5 h-5 rounded-full border-2 border-[#c8aa6e] border-t-transparent animate-spin"
+          ></div>
+          <div>
+            <p id="loadingTitle" class="text-sm font-semibold text-[#f0e6d2]">
+              Condensando Timeline e invocando Antigravity (agy)...
+            </p>
+            <p class="text-xs text-[#8b9bb4]">
+              Extraindo deltas 0–15m, objetivos, spikes e cruzando mortes com ouro flutuando (timeout máximo: 90s).
+            </p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="h-36 rounded-lg shimmer"></div>
+          <div class="h-36 rounded-lg shimmer"></div>
+          <div class="h-36 rounded-lg shimmer"></div>
+          <div class="h-36 rounded-lg shimmer"></div>
+        </div>
+      </section>
+
+      <!-- RESULTADO LENTE 1: 4 BLOCOS ANALÍTICOS -->
+      <section id="autopsySection" class="hidden space-y-4">
+        <!-- Resumo da Partida & Veredito Geral -->
+        <div class="hex-panel hex-panel-accent rounded-xl p-5 space-y-4">
+          <div
+            id="matchMetaHeader"
+            class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-white/10"
+          ></div>
+
+          <div class="rounded-lg bg-[#070a0f]/75 border border-[#c8aa6e]/25 p-4">
+            <div class="font-mono-tech text-[11px] uppercase tracking-wider text-[#c8aa6e] mb-1">
+              Veredito Tático Geral
+            </div>
+            <p id="verdictText" class="text-sm sm:text-base text-[#f0e6d2] leading-relaxed"></p>
+          </div>
+        </div>
+
+        <!-- Grid 2x2 dos 4 Blocos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- BLOCO 1: FASE DE ROTAS (0-15m) -->
+          <article class="hex-panel rounded-xl p-5 flex flex-col gap-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <span class="font-mono-tech text-[11px] uppercase tracking-wider text-[#0ac8b9]"
+                  >Bloco 01 • 0–15 min</span
+                >
+                <h3 class="text-base font-bold text-[#f0e6d2]">Fase de Rotas</h3>
+              </div>
+              <div
+                id="laneScore"
+                class="score-pill font-mono-tech text-sm font-bold px-2.5 py-1 rounded-md border"
+              ></div>
+            </div>
+            <p id="laneSummary" class="text-xs font-medium text-[#c8aa6e]"></p>
+            <div id="laneMetrics" class="flex flex-wrap gap-1.5"></div>
+            <p id="laneAnalysis" class="text-sm text-[#d6dde8] leading-relaxed"></p>
+          </article>
+
+          <!-- BLOCO 2: TRANSIÇÃO E MACRO (15-25m) -->
+          <article class="hex-panel rounded-xl p-5 flex flex-col gap-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <span class="font-mono-tech text-[11px] uppercase tracking-wider text-[#0ac8b9]"
+                  >Bloco 02 • 15–25 min</span
+                >
+                <h3 class="text-base font-bold text-[#f0e6d2]">Transição e Macro</h3>
+              </div>
+              <div
+                id="macroScore"
+                class="score-pill font-mono-tech text-sm font-bold px-2.5 py-1 rounded-md border"
+              ></div>
+            </div>
+            <p id="macroSummary" class="text-xs font-medium text-[#c8aa6e]"></p>
+            <div id="macroMetrics" class="flex flex-wrap gap-1.5"></div>
+            <p id="macroAnalysis" class="text-sm text-[#d6dde8] leading-relaxed"></p>
+          </article>
+
+          <!-- BLOCO 3: PONTO DE INFLEXÃO (ERRO FATAL) -->
+          <article
+            class="hex-panel rounded-xl p-5 border-[#e84057]/40 bg-gradient-to-b from-[#231018]/90 to-[#0d131d]/95 flex flex-col gap-3"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <span class="font-mono-tech text-[11px] uppercase tracking-wider text-[#e84057]"
+                  >Bloco 03 • Erro Fatal</span
+                >
+                <h3 class="text-base font-bold text-[#f0e6d2]">Ponto de Inflexão</h3>
+              </div>
+              <span
+                id="inflectionTimestamp"
+                class="font-mono-tech text-xs font-bold px-2.5 py-1 rounded-md bg-[#e84057]/20 text-[#ff8a9b] border border-[#e84057]/40"
+              ></span>
+            </div>
+            <div id="inflectionTitle" class="text-sm font-semibold text-[#ffd5dc]"></div>
+            <div
+              id="inflectionCost"
+              class="font-mono-tech text-xs text-[#f5b971] bg-black/30 border border-[#f5b971]/25 rounded px-2.5 py-1.5"
+            ></div>
+            <p id="inflectionAnalysis" class="text-sm text-[#e6dce0] leading-relaxed"></p>
+          </article>
+
+          <!-- BLOCO 4: PRESCRIÇÃO (PLANO DE TREINO) -->
+          <article class="hex-panel rounded-xl p-5 border-[#c8aa6e]/35 flex flex-col gap-3">
+            <div>
+              <span class="font-mono-tech text-[11px] uppercase tracking-wider text-[#c8aa6e]"
+                >Bloco 04 • Próximo Jogo</span
+              >
+              <h3 class="text-base font-bold text-[#f0e6d2]">
+                Prescrição (Plano de Treino)
+              </h3>
+            </div>
+            <ol id="prescriptionList" class="space-y-2.5"></ol>
+          </article>
+        </div>
+
+        <!-- FALLBACK RAW (APENAS SE AGY FUGIR DO JSON) -->
+        <div
+          id="rawFallbackBox"
+          class="hidden hex-panel rounded-xl p-5 border-amber-500/40 space-y-2"
+        >
+          <div class="font-mono-tech text-xs uppercase text-amber-400">
+            Resposta Bruta do AGY (Modo Fallback)
+          </div>
+          <pre
+            id="rawFallbackText"
+            class="font-mono-tech text-xs text-[#d6dde8] whitespace-pre-wrap bg-black/40 p-3.5 rounded-lg max-h-80 overflow-auto"
+          ></pre>
+        </div>
+
+        <!-- INSPEÇÃO DE TELEMETRIA CONDENSADA -->
+        <details class="hex-panel rounded-xl p-4">
+          <summary
+            class="cursor-pointer select-none text-xs font-mono-tech text-[#8b9bb4] hover:text-[#f0e6d2] flex items-center justify-between"
+          >
+            <span>Inspecionar Telemetria Condensada enviada ao AGY (JSON Determinístico)</span>
+            <span id="telemetryMetaTag" class="text-[#0ac8b9]"></span>
+          </summary>
+          <pre
+            id="telemetryJsonPre"
+            class="mt-3 font-mono-tech text-[11px] text-[#9fb3cc] bg-black/45 p-3.5 rounded-lg overflow-auto max-h-80"
+          ></pre>
+        </details>
+      </section>
+
+      <!-- LENTE 2: COACH TÁTICO AO VIVO (LIVE COACH) -->
+      <section class="hex-panel hex-panel-accent rounded-xl p-5 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono-tech text-[11px] uppercase tracking-widest text-[#0ac8b9]"
+                >Lente 2 • Coach Tático Ao Vivo (Read-Only)</span
+              >
+              <span
+                id="liveConnectionPill"
+                class="font-mono-tech text-[10px] px-2 py-0.5 rounded bg-white/5 border border-white/15 text-[#8b9bb4]"
+                >PAUSADO</span
+              >
+            </div>
+            <h2 class="text-base font-semibold text-[#f0e6d2]">
+              Live Coach — Loop Silencioso por Deltas (<code class="font-mono-tech text-xs text-[#8b9bb4]">127.0.0.1:2999</code>)
+            </h2>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              id="btnLiveToggle"
+              type="button"
+              class="hex-btn-primary rounded-lg px-3.5 py-2 text-xs"
+            >
+              Iniciar Live Coach
+            </button>
+            <button
+              id="btnLiveMute"
+              type="button"
+              class="rounded-lg px-3 py-2 text-xs font-semibold border border-white/15 bg-white/5 text-[#d6dde8] hover:border-[#c8aa6e]/50 transition"
+            >
+              MUTE: OFF
+            </button>
+            <button
+              id="btnLiveSimulate"
+              type="button"
+              class="hex-btn-secondary rounded-lg px-3 py-2 text-xs font-semibold"
+              title="Dispara um delta tático realista para testar o Live Coach sem precisar estar em partida"
+            >
+              Simular Evento Live
+            </button>
+            <button
+              id="btnLiveClear"
+              type="button"
+              class="rounded-lg px-3 py-2 text-xs text-[#8b9bb4] border border-white/10 hover:text-[#f0e6d2] hover:border-white/25 transition"
+            >
+              Limpar
+            </button>
+            <button
+              id="btnTestLive"
+              type="button"
+              class="rounded-lg px-3 py-2 text-xs font-mono-tech text-[#8b9bb4] border border-white/10 hover:text-[#0ac8b9] hover:border-[#0ac8b9]/40 transition"
+            >
+              Testar JSON 2999
+            </button>
+          </div>
+        </div>
+
+        <!-- Status Bar do Live Coach -->
+        <div
+          class="rounded-lg bg-black/35 border border-white/10 px-3.5 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs"
+        >
+          <span id="liveCoachStatusText" class="text-[#b7c4d6]"
+            >Live Coach pausado. Clique em Iniciar para monitorar a porta 2999.</span
+          >
+          <div class="flex items-center gap-3 font-mono-tech text-[11px] text-[#8b9bb4]">
+            <span id="liveActiveChampMeta"></span>
+            <span id="liveCooldownMeta">Cooldown: pronto</span>
+          </div>
+        </div>
+
+        <!-- Último Aviso em Destaque (Máximo 2 Linhas) -->
+        <div
+          id="liveAdviceHero"
+          class="rounded-xl border border-[#0ac8b9]/25 bg-[#070a0f]/80 p-4 space-y-2"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span
+                id="liveAdviceSeverity"
+                class="font-mono-tech text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-[#8b9bb4]"
+                >SILENCIOSO</span
+              >
+              <span id="liveAdviceTrigger" class="text-xs font-medium text-[#8b9bb4]"
+                >Nenhum delta acionável detectado ainda.</span
+              >
+            </div>
+            <span id="liveAdviceClock" class="font-mono-tech text-xs text-[#c8aa6e]">--:--</span>
+          </div>
+          <div id="liveAdviceLines" class="space-y-1 text-sm text-[#f0e6d2] font-medium">
+            <p class="text-xs text-[#8b9bb4]">
+              O Live Coach só fala quando identifica mudança real de estado (ouro flutuando, Power Spike inimigo, atraso de CS ou janela de objetivo).
+            </p>
+          </div>
+        </div>
+
+        <!-- Histórico de Avisos do Live Coach -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-[#8b9bb4]">
+            <span class="font-mono-tech uppercase tracking-wider text-[11px]"
+              >Histórico de Avisos (Máx. 2 linhas por call)</span
+            >
+            <span id="liveHistoryCount" class="font-mono-tech text-[11px]">0 avisos</span>
+          </div>
+          <div
+            id="liveHistoryList"
+            class="space-y-2 max-h-60 overflow-y-auto pr-1"
+          ></div>
+        </div>
+
+        <!-- Debug opcional: Testar JSON 127.0.0.1:2999 -->
+        <div id="liveResultBox" class="hidden space-y-2.5 pt-2 border-t border-white/10">
+          <div
+            id="liveStatusBanner"
+            class="rounded-lg px-3.5 py-2.5 text-xs font-medium flex flex-wrap items-center justify-between gap-2"
+          ></div>
+          <pre
+            id="liveJsonPre"
+            class="font-mono-tech text-[11px] text-[#9fb3cc] bg-black/45 p-3.5 rounded-lg overflow-auto max-h-64"
+          ></pre>
+        </div>
+      </section>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
