@@ -1,0 +1,48 @@
+{
+  "veredito_geral": "Voce construiu vantagem real na fase de rotas (+540g e +470 XP aos 15m contra Ahri), mas devolveu todo o Tempo no mid-game ao estender isolado no top-side com 1800g no bolso antes do Dragao Infernal.",
+  "fase_de_rotas": {
+    "nota": 7.8,
+    "resumo": "Pressao consistente de wave e vantagem de nivel, com apenas 1 deslize grave de gank aos 09:18.",
+    "metricas_chave": [
+      "140 CS aos 15m (8.0 CS/min total)",
+      "Gold Diff 15m: +540g vs Ahri",
+      "XP Diff 15m: +470 XP (Lvl 12 vs 11)",
+      "3 wards colocadas ate 15m (1 Pink)"
+    ],
+    "analise": "Sua fase de rotas com Orianna foi solida: voce puniu a Ahri no farm (138+2 CS aos 15m contra 123) e converteu pressao em abate aos 06:18 + Vastilarvas e solo kill aos 13:15. O unico ponto fora da curva foi a morte aos 09:18 para o Viego com 1240g sem gastar, que gerou swing de XP na janela da morte e permitiu o primeiro Dragao Infernal inimigo. Alem disso, apenas 3 wards nos primeiros 15 minutos deixaram o lado escuro da selva exposto."
+  },
+  "transicao_macro": {
+    "nota": 4.9,
+    "resumo": "Power Spikes bem cronometrados (Companheiro de Luden aos 11:30 e Zhonya aos 18:30), mas baixa conversao em objetivos neutros.",
+    "metricas_chave": [
+      "Luden 11:30 | Zhonya 18:30",
+      "Participacao em objetivos 15-25m: 1/3",
+      "Gold Diff virou de +540g (15m) para -630g (25m)"
+    ],
+    "analise": "Voce fechou seus dois primeiros itens em otimo Tempo e manteve vantagem ate os 20 minutos (+200g). Porem, entre 15m e 25m o mapa virou completamente porque voce nao sincronizou seus recalls com o cronometro dos objetivos neutros. Mesmo com Ampulheta de Zhonya fechada aos 18:30, a falta de setup antecipado de visao no rio fez sua equipe perder controle de zona antes das lutas de Dragao e Barao."
+  },
+  "ponto_de_inflexao": {
+    "timestamp": "22:15",
+    "titulo": "Morte isolada no Top-side com 1800g flutuando antes do Dragao Infernal",
+    "custo_estimado": "Dragao Infernal + T1 Mid + virada de ~1350g de swing",
+    "analise": "Aos 22:15 voce foi pego por Jax + Viego no Top-side carregando 1800g nao gastos enquanto o Dragao Infernal estava vivo. Essa unica morte quebrou completamente o Tempo do seu time: 27 segundos depois o inimigo garantiu o Dragao Infernal sem contestacao e derrubou a T1 Mid aos 22:58, abrindo o mapa para o pick-off no pit do Barao aos 25:18."
+  },
+  "prescricao": [
+    {
+      "prioridade": 1,
+      "foco": "Regra do Recall de 45 segundos",
+      "acao_pratica": "Sempre que faltar 60s para Dragao ou Barao e voce estiver com >1200g, empurre a wave do mid, de base imediatamente e chegue ao rio com item fechado e Pink Ward."
+    },
+    {
+      "prioridade": 2,
+      "foco": "Posicionamento de Side-lane sem Visao",
+      "acao_pratica": "De Orianna sem visao do jungler inimigo, nunca ultrapasse o rio na side-lane oposta ao objetivo ativo; colete a wave segura e rotacione para o mid para manter prioridade."
+    },
+    {
+      "prioridade": 3,
+      "foco": "Disciplina de Visao na Lane Phase (0-15m)",
+      "acao_pratica": "Aumente de 3 para pelo menos 6 wards ate os 15 minutos, priorizando a entrada das galinhas/rio do lado onde o jungler inimigo terminou o clear."
+    }
+  ],
+  "parseMode": "json"
+}

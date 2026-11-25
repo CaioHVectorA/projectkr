@@ -1,0 +1,18 @@
+# Segredos locais
+.env
+.env.local
+
+# Builds e artefatos de release locais
+dist/
+
+# Dependências e caches gerados em runtime
+node_modules/
+data/cache/
+data/ddragon/
+data/last_prompt.txt
+data/last_response.txt
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.log
