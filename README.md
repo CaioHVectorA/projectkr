@@ -36,12 +36,12 @@ projectkr/
 
 ---
 
-## Opção 1 — Testar Rápido pelo Release do GitHub (Windows 10/11, sem instalar Bun)
+## Opção 1 — Testar Rápido pelo Release do GitHub (Windows 10/11, sem instalar nada)
 
-1. Baixe `projeto-loot-v0.2.0-win-x64.zip` na aba **Releases** do repositório.
+1. Baixe `projeto-loot-v0.3.0-win-x64.zip` na aba **Releases** do repositório.
 2. Extraia a pasta em qualquer diretório do seu PC.
-3. *(Opcional)* Copie `.env.example` para `.env` e adicione sua `RIOT_API_KEY` (sem chave, você já pode testar imediatamente usando o **Modo Demo**).
-4. Execute `projeto-loot-win-x64.exe` e abra **`http://localhost:3000`** no navegador.
+3. Dê dois cliques em **`INICIAR_PROJETO_LOOT.bat`** — o app abre automaticamente em **`http://localhost:3000`**.
+4. *(Opcional)* Clique em **Configurações** no topo da tela para colar sua Riot API Key, definir seu Riot ID padrão, testar a chave em 1 clique ou ajustar o CLI `agy` (tudo é salvo automaticamente em `data/settings.json`, **zero `.env`**). Sem chave, o **Modo Demo (Mock)** e **Simular Evento Live** já funcionam na hora.
 
 ---
 
@@ -51,16 +51,13 @@ projectkr/
 # 1. Instale o Bun (se ainda não tiver)
 powershell -c "irm bun.sh/install.ps1 | iex"
 
-# 2. Copie o .env
-copy .env.example .env
-
-# 3. Suba o servidor único (API + Frontend na porta 3000)
+# 2. Suba o servidor único (API + Frontend na porta 3000)
 bun run dev
 
-# 4. Rodar testes automatizados
+# 3. Rodar testes automatizados
 bun test
 
-# 5. Gerar executável Windows (.exe)
+# 4. Gerar executável Windows (.exe)
 bun run build:win
 ```
 

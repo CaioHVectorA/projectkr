@@ -115,7 +115,7 @@ export class AgyQueueClient {
       );
       if (/ENOENT|not found|cannot find/i.test(msg)) {
         throw new AgyExecutionError(
-          `CLI "${this.cfg.agyBin}" não encontrado no PATH. Verifique se o Antigravity CLI está instalado ou configure AGY_BIN no arquivo .env.`,
+          `CLI "${this.cfg.agyBin}" não encontrado no PATH. Abra "Configurações" no topo do app para informar o caminho do executável agy (ou marque "Simular AGY").`,
           "AGY_NOT_FOUND",
           msg
         );

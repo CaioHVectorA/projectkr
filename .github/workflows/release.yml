@@ -43,7 +43,6 @@ jobs:
           New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
 
           Copy-Item "dist/projeto-loot-win-x64.exe" "$pkgDir/projeto-loot-win-x64.exe"
-          Copy-Item ".env.example" "$pkgDir/.env.example"
           Copy-Item "README.md" "$pkgDir/README.md"
 
           $bat = @"
@@ -67,20 +66,21 @@ jobs:
         shell: pwsh
         run: |
           $notes = @"
-          ## PROJETO LOOT $env:TAG (Windows x64 Standalone)
+          ## PROJETO LOOT $env:TAG (Windows x64 Standalone — Zero .env)
 
-          Versão empacotada para teste rápido no Windows 10/11 — **sem precisar instalar Bun ou Node.js** (frontend e mocks já estão embutidos no executável).
+          Versão 100% amigável para Windows 10/11 — **sem precisar instalar Bun/Node e sem editar arquivos .env**. Tudo é configurado direto na interface do app.
 
-          ### Como testar em 3 passos (Windows 10/11)
+          ### Como usar em 2 passos (Windows 10/11)
           1. Baixe e extraia ``projeto-loot-$env:TAG-win-x64.zip``.
-          2. *(Opcional)* Copie ``.env.example`` para ``.env`` e informe sua ``RIOT_API_KEY`` (sem chave, você já consegue testar tudo usando **Modo Demo (Mock)** e **Simular Evento Live**).
-          3. Dê dois cliques em ``INICIAR_PROJETO_LOOT.bat`` (ou execute ``projeto-loot-win-x64.exe`` e abra ``http://localhost:3000``).
+          2. Dê dois cliques em **``INICIAR_PROJETO_LOOT.bat``** — o app abre automaticamente em ``http://localhost:3000``.
+          3. *(Opcional)* Clique em **Configurações** no topo da tela para colar sua Riot API Key, definir seu Riot ID padrão, testar a chave em 1 clique ou ajustar o CLI ``agy``. Sem chave, o **Modo Demo (Mock)** e **Simular Evento Live** já funcionam na hora.
 
           ### O que está incluído
+          - **Configurações 100% In-App:** Riot API Key (com botão Testar Chave e mascaramento), Riot ID padrão, Servidor, CLI ``agy`` (caminho, modo ``arg|stdin``, timeout) e intervalos do Live Coach salvos automaticamente em ``data/settings.json``.
           - **Arquitetura em Camadas:** Camada de Dados (``backend/data/``), Camada de Domínio (``backend/domain/``), Camada de IA (``backend/ai/``) e Camada HTTP (``backend/http/``).
-          - **Lente 1 — Autópsia Pós-Jogo:** busca por Riot ID (BR1), histórico das últimas 10 partidas com filtro de fila, Data Dragon ``pt_BR`` em cache local, condensador determinístico da Timeline (``< 6KB``) e 4 blocos analíticos via CLI local ``agy``.
-          - **Lente 2 — Live Coach (Read-Only):** polling a cada ``12s`` em ``https://127.0.0.1:2999``, loop silencioso com cooldown de ``60s`` disparado apenas por deltas acionáveis, avisos de **no máximo 2 linhas**, botão **MUTE**, histórico de avisos e botão **Simular Evento Live**.
+          - **Lente 1 — Autópsia Pós-Jogo:** busca por Riot ID, histórico das últimas 10 partidas com filtro de fila, Data Dragon ``pt_BR``, condensador da Timeline (``< 6KB``) e 4 blocos analíticos.
+          - **Lente 2 — Live Coach (Read-Only):** polling a cada ``12s`` em ``127.0.0.1:2999``, loop silencioso por deltas (cooldown ``60s``), avisos de **máximo 2 linhas**, botão **MUTE**, histórico e **Simular Evento Live**.
           "@
           gh release create "$env:TAG" "$env:ZIP_PATH" `
-            --title "PROJETO LOOT $env:TAG — Lente 1 (Autópsia Pós-Jogo) + Lente 2 (Live Coach)" `
+            --title "PROJETO LOOT $env:TAG — Configurações In-App + Lente 1 + Live Coach" `
             --notes $notes

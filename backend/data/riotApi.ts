@@ -105,7 +105,7 @@ export function normalizeRole(pos?: string): string {
 async function riotFetch<T>(url: string): Promise<T> {
   if (!hasConfiguredRiotKey()) {
     throw new RiotApiError(
-      "RIOT_API_KEY não configurada no arquivo .env. Configure sua chave de desenvolvedor ou ative o Modo Demo (Mock).",
+      'Riot API Key ainda não configurada. Clique em "Configurações" no topo do app para colar sua chave ou use o Modo Demo (Mock).',
       401,
       "RIOT_KEY_MISSING"
     );
@@ -128,14 +128,14 @@ async function riotFetch<T>(url: string): Promise<T> {
 
   if (res.status === 401 || res.status === 403) {
     throw new RiotApiError(
-      "Riot API Key inválida ou expirada (chaves Developer expiram a cada 24h). Renove no portal da Riot ou ative o Modo Demo (Mock).",
+      'Riot API Key inválida ou expirada (chaves Developer expiram a cada 24h). Clique em "Configurações" para atualizar sua chave ou ative o Modo Demo (Mock).',
       res.status,
       "RIOT_AUTH_ERROR"
     );
   }
   if (res.status === 404) {
     throw new RiotApiError(
-      "Conta ou partida não encontrada na Riot API (verifique Nome#TAG e região BR1/americas).",
+      "Conta ou partida não encontrada na Riot API (verifique Nome#TAG e o servidor em Configurações).",
       404,
       "RIOT_NOT_FOUND"
     );
@@ -158,6 +158,59 @@ async function riotFetch<T>(url: string): Promise<T> {
   }
 
   return (await res.json()) as T;
+}
+
+/**
+ * Testa uma Riot API Key diretamente contra o endpoint leve /lol/status/v4/platform-data
+ * para dar feedback instantâneo dentro do modal de Configurações do app.
+ */
+export async function testRiotApiKey(
+  candidateKey?: string,
+  platformOverride?: string
+): Promise<{ valid: boolean; status: number; message: string }> {
+  const key = (candidateKey?.trim() || config.riotApiKey).trim();
+  const platform = (platformOverride?.trim() || config.riotPlatform).toLowerCase();
+
+  if (!key || key.includes("SEU-TOKEN-AQUI")) {
+    return {
+      valid: false,
+      status: 400,
+      message: "Cole sua Riot API Key antes de testar.",
+    };
+  }
+
+  try {
+    const url = `https://${platform}.api.riotgames.com/lol/status/v4/platform-data`;
+    const res = await fetch(url, {
+      headers: { "X-Riot-Token": key },
+    });
+    if (res.ok) {
+      return {
+        valid: true,
+        status: res.status,
+        message: `Chave válida e ativa no servidor ${platform.toUpperCase()}!`,
+      };
+    }
+    if (res.status === 401 || res.status === 403) {
+      return {
+        valid: false,
+        status: res.status,
+        message:
+          "Chave inválida ou expirada (HTTP 401/403). Gere uma nova em developer.riotgames.com.",
+      };
+    }
+    return {
+      valid: false,
+      status: res.status,
+      message: `A Riot API respondeu HTTP ${res.status}. Tente novamente em instantes.`,
+    };
+  } catch (err) {
+    return {
+      valid: false,
+      status: 502,
+      message: `Sem conexão com a Riot API: ${(err as Error).message}`,
+    };
+  }
 }
 
 export async function getAccountByRiotId(riotId: string): Promise<RiotAccount> {

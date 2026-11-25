@@ -215,4 +215,57 @@ describe("PROJETO LOOT — Motor AGY & Camada HTTP", () => {
     expect(htmlRes.status).toBe(200);
     expect(await htmlRes.text()).toContain("PROJETO LOOT");
   });
+
+  test("Configurações in-app (/api/settings) salvam, mascaram chave e aplicam em tempo real sem .env", async () => {
+    const saveRes = await handleRequest(
+      new Request("http://localhost:3000/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          riotApiKey: "RGAPI-test-1234567890-abcd",
+          defaultRiotId: "CaioTester#BR1",
+          riotPlatform: "br1",
+          agyMode: "stdin",
+          livePollIntervalSec: 15,
+        }),
+      })
+    );
+    expect(saveRes.status).toBe(200);
+    const saved = (await saveRes.json()) as {
+      ok: boolean;
+      settings: {
+        riotKeyConfigured: boolean;
+        riotKeyMasked: string;
+        defaultRiotId: string;
+        agyMode: string;
+        livePollIntervalSec: number;
+      };
+    };
+    expect(saved.ok).toBe(true);
+    expect(saved.settings.riotKeyConfigured).toBe(true);
+    expect(saved.settings.riotKeyMasked).toContain("RGAPI-");
+    expect(saved.settings.riotKeyMasked).not.toContain("1234567890");
+    expect(saved.settings.defaultRiotId).toBe("CaioTester#BR1");
+    expect(saved.settings.agyMode).toBe("stdin");
+    expect(saved.settings.livePollIntervalSec).toBe(15);
+
+    // Restaura estado limpo após o teste
+    const clearRes = await handleRequest(
+      new Request("http://localhost:3000/api/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clearRiotApiKey: true,
+          defaultRiotId: "",
+          agyMode: "arg",
+          livePollIntervalSec: 12,
+        }),
+      })
+    );
+    expect(clearRes.status).toBe(200);
+    const cleared = (await clearRes.json()) as {
+      settings: { riotKeyConfigured: boolean };
+    };
+    expect(cleared.settings.riotKeyConfigured).toBe(false);
+  });
 });

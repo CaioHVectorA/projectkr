@@ -1,6 +1,6 @@
 {
   "name": "projeto-loot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Sistema Especialista de Análise Tática de League of Legends via Antigravity Local (agy)",
   "type": "module",
   "scripts": {

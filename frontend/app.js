@@ -55,6 +55,29 @@ const els = {
   liveResultBox: document.getElementById("liveResultBox"),
   liveStatusBanner: document.getElementById("liveStatusBanner"),
   liveJsonPre: document.getElementById("liveJsonPre"),
+  // Configurações in-app
+  btnOpenSettings: document.getElementById("btnOpenSettings"),
+  settingsAlertDot: document.getElementById("settingsAlertDot"),
+  btnQuickSettings: document.getElementById("btnQuickSettings"),
+  settingsModal: document.getElementById("settingsModal"),
+  btnCloseSettings: document.getElementById("btnCloseSettings"),
+  btnCancelSettings: document.getElementById("btnCancelSettings"),
+  settingsForm: document.getElementById("settingsForm"),
+  cfgRiotApiKey: document.getElementById("cfgRiotApiKey"),
+  cfgKeyStatusLabel: document.getElementById("cfgKeyStatusLabel"),
+  btnToggleKeyVisibility: document.getElementById("btnToggleKeyVisibility"),
+  btnTestRiotKey: document.getElementById("btnTestRiotKey"),
+  cfgKeyTestFeedback: document.getElementById("cfgKeyTestFeedback"),
+  cfgDefaultRiotId: document.getElementById("cfgDefaultRiotId"),
+  cfgRiotPlatform: document.getElementById("cfgRiotPlatform"),
+  cfgAgyBin: document.getElementById("cfgAgyBin"),
+  cfgAgyMode: document.getElementById("cfgAgyMode"),
+  cfgAgyTimeoutSec: document.getElementById("cfgAgyTimeoutSec"),
+  cfgLivePollSec: document.getElementById("cfgLivePollSec"),
+  cfgLiveCooldownSec: document.getElementById("cfgLiveCooldownSec"),
+  cfgSaveFeedback: document.getElementById("cfgSaveFeedback"),
+  btnClearRiotKey: document.getElementById("btnClearRiotKey"),
+  btnSaveSettings: document.getElementById("btnSaveSettings"),
 };
 
 let liveStateCache = { running: false, muted: false };
@@ -385,6 +408,7 @@ async function fetchMatchHistory() {
     if (!res.ok) {
       showError(data.error || "Falha ao buscar histórico de partidas.", {
         suggestMock: data.suggestMock,
+        suggestSettings: data.suggestSettings,
       });
       return;
     }
@@ -427,6 +451,7 @@ async function runAutopsy(matchId = null) {
       showError(data.error || "Erro ao executar autópsia pós-jogo.", {
         suggestMock: data.suggestMock,
         suggestMockAgy: data.suggestMockAgy,
+        suggestSettings: data.suggestSettings,
       });
       return;
     }
@@ -605,6 +630,7 @@ async function simulateLiveEvent() {
     if (!res.ok) {
       showError(data.error || "Falha ao simular evento do Live Coach.", {
         suggestMockAgy: data.suggestMockAgy,
+        suggestSettings: data.suggestSettings,
       });
       return;
     }
@@ -653,6 +679,155 @@ async function testLiveClient() {
   }
 }
 
+// ============================================================================
+// CONFIGURAÇÕES IN-APP (SEM .ENV)
+// ============================================================================
+
+async function openSettingsModal() {
+  els.cfgKeyTestFeedback.classList.add("hidden");
+  els.cfgSaveFeedback.classList.add("hidden");
+  els.cfgRiotApiKey.value = "";
+  els.cfgRiotApiKey.type = "password";
+  els.btnToggleKeyVisibility.textContent = "Mostrar";
+
+  try {
+    const res = await fetch("/api/settings");
+    if (res.ok) {
+      const cfg = await res.json();
+      els.cfgKeyStatusLabel.textContent = cfg.riotKeyConfigured
+        ? `Salva: ${cfg.riotKeyMasked}`
+        : "Nenhuma chave salva";
+      els.cfgDefaultRiotId.value = cfg.defaultRiotId || "";
+      els.cfgRiotPlatform.value = cfg.riotPlatform || "br1";
+      els.cfgAgyBin.value = cfg.agyBin || "agy";
+      els.cfgAgyMode.value = cfg.agyMode || "arg";
+      els.cfgAgyTimeoutSec.value = String(cfg.agyTimeoutSec || 90);
+      els.cfgLivePollSec.value = String(cfg.livePollIntervalSec || 12);
+      els.cfgLiveCooldownSec.value = String(cfg.liveCoachCooldownSec || 60);
+    }
+  } catch {
+    // Mantém valores padrão no modal
+  }
+
+  els.settingsModal.classList.remove("hidden");
+  els.cfgRiotApiKey.focus();
+}
+
+function closeSettingsModal() {
+  els.settingsModal.classList.add("hidden");
+}
+
+function showKeyTestFeedback(ok, message) {
+  els.cfgKeyTestFeedback.textContent = message;
+  els.cfgKeyTestFeedback.className = ok
+    ? "text-xs rounded-md px-3 py-2 bg-[#0ac8b9]/15 border border-[#0ac8b9]/40 text-[#8bf2ea]"
+    : "text-xs rounded-md px-3 py-2 bg-[#e84057]/15 border border-[#e84057]/40 text-[#ffd5dc]";
+  els.cfgKeyTestFeedback.classList.remove("hidden");
+}
+
+function showSaveFeedback(ok, message) {
+  els.cfgSaveFeedback.textContent = message;
+  els.cfgSaveFeedback.className = ok
+    ? "text-xs rounded-md px-3 py-2 bg-[#0ac8b9]/15 border border-[#0ac8b9]/40 text-[#8bf2ea]"
+    : "text-xs rounded-md px-3 py-2 bg-[#e84057]/15 border border-[#e84057]/40 text-[#ffd5dc]";
+  els.cfgSaveFeedback.classList.remove("hidden");
+}
+
+async function handleTestRiotKey() {
+  els.btnTestRiotKey.disabled = true;
+  els.btnTestRiotKey.textContent = "Testando...";
+  try {
+    const res = await fetch("/api/settings/test-riot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        riotApiKey: els.cfgRiotApiKey.value.trim() || undefined,
+        riotPlatform: els.cfgRiotPlatform.value,
+      }),
+    });
+    const data = await res.json();
+    showKeyTestFeedback(Boolean(data.valid), data.message || "Teste concluído.");
+  } catch (err) {
+    showKeyTestFeedback(false, `Erro ao testar chave: ${err.message}`);
+  } finally {
+    els.btnTestRiotKey.disabled = false;
+    els.btnTestRiotKey.textContent = "Testar Chave";
+  }
+}
+
+async function handleSaveSettings(e) {
+  e.preventDefault();
+  els.btnSaveSettings.disabled = true;
+  els.btnSaveSettings.textContent = "Salvando...";
+  try {
+    const typedKey = els.cfgRiotApiKey.value.trim();
+    const payload = {
+      riotApiKey: typedKey || undefined,
+      defaultRiotId: els.cfgDefaultRiotId.value.trim(),
+      riotPlatform: els.cfgRiotPlatform.value,
+      agyBin: els.cfgAgyBin.value.trim() || "agy",
+      agyMode: els.cfgAgyMode.value,
+      agyTimeoutSec: Number(els.cfgAgyTimeoutSec.value) || 90,
+      livePollIntervalSec: Number(els.cfgLivePollSec.value) || 12,
+      liveCoachCooldownSec: Number(els.cfgLiveCooldownSec.value) || 60,
+    };
+
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showSaveFeedback(false, data.error || "Não foi possível salvar.");
+      return;
+    }
+
+    const updated = data.settings;
+    els.cfgKeyStatusLabel.textContent = updated.riotKeyConfigured
+      ? `Salva: ${updated.riotKeyMasked}`
+      : "Nenhuma chave salva";
+    els.cfgRiotApiKey.value = "";
+
+    if (updated.defaultRiotId) {
+      els.riotIdInput.value = updated.defaultRiotId;
+    }
+    if (typedKey && updated.riotKeyConfigured) {
+      // Se o usuário acabou de colar uma Riot Key nova, desliga o Modo Demo automaticamente
+      els.toggleMockData.checked = false;
+    }
+
+    clearError();
+    await loadHealth(false);
+    await refreshLiveStatus();
+    showSaveFeedback(true, "Configurações salvas e aplicadas em tempo real!");
+    setTimeout(closeSettingsModal, 750);
+  } catch (err) {
+    showSaveFeedback(false, `Erro ao salvar: ${err.message}`);
+  } finally {
+    els.btnSaveSettings.disabled = false;
+    els.btnSaveSettings.textContent = "Salvar Configurações";
+  }
+}
+
+async function handleClearRiotKey() {
+  try {
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clearRiotApiKey: true }),
+    });
+    if (res.ok) {
+      els.cfgKeyStatusLabel.textContent = "Nenhuma chave salva";
+      els.cfgRiotApiKey.value = "";
+      await loadHealth(false);
+      showSaveFeedback(true, "Riot API Key removida.");
+    }
+  } catch (err) {
+    showSaveFeedback(false, `Erro ao remover chave: ${err.message}`);
+  }
+}
+
 els.searchForm.addEventListener("submit", (e) => {
   e.preventDefault();
   runAutopsy(null);
@@ -666,6 +841,7 @@ els.btnQuickMock.addEventListener("click", () => {
   clearError();
   runAutopsy(null);
 });
+els.btnQuickSettings.addEventListener("click", openSettingsModal);
 
 els.btnLiveToggle.addEventListener("click", toggleLiveCoach);
 els.btnLiveMute.addEventListener("click", toggleLiveMute);
@@ -673,5 +849,25 @@ els.btnLiveClear.addEventListener("click", clearLiveHistory);
 els.btnLiveSimulate.addEventListener("click", simulateLiveEvent);
 els.btnTestLive.addEventListener("click", testLiveClient);
 
-loadHealth();
+els.btnOpenSettings.addEventListener("click", openSettingsModal);
+els.btnCloseSettings.addEventListener("click", closeSettingsModal);
+els.btnCancelSettings.addEventListener("click", closeSettingsModal);
+els.settingsModal.addEventListener("click", (e) => {
+  if (e.target === els.settingsModal) closeSettingsModal();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !els.settingsModal.classList.contains("hidden")) {
+    closeSettingsModal();
+  }
+});
+els.btnToggleKeyVisibility.addEventListener("click", () => {
+  const isPwd = els.cfgRiotApiKey.type === "password";
+  els.cfgRiotApiKey.type = isPwd ? "text" : "password";
+  els.btnToggleKeyVisibility.textContent = isPwd ? "Ocultar" : "Mostrar";
+});
+els.btnTestRiotKey.addEventListener("click", handleTestRiotKey);
+els.settingsForm.addEventListener("submit", handleSaveSettings);
+els.btnClearRiotKey.addEventListener("click", handleClearRiotKey);
+
+loadHealth(true);
 refreshLiveStatus();

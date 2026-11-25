@@ -1,7 +1,13 @@
 import { agyClient, AgyExecutionError } from "../ai/agyClient";
 import { liveCoachService } from "../ai/liveCoachService";
 import { runPostGameAutopsy } from "../ai/postGameService";
-import { config, hasConfiguredRiotKey } from "../config";
+import {
+  config,
+  getPublicSettings,
+  hasConfiguredRiotKey,
+  updateRuntimeSettings,
+  type SettingsUpdateInput,
+} from "../config";
 import { fetchLiveClientSnapshot } from "../data/liveClient";
 import { loadMockMatch, MOCK_ACCOUNT } from "../data/mockRepository";
 import {
@@ -10,6 +16,7 @@ import {
   getMatchById,
   getRecentMatchIds,
   RiotApiError,
+  testRiotApiKey,
 } from "../data/riotApi";
 import type { MatchSummaryItem, QueueFilter } from "../types";
 import { serveFrontendAsset } from "./assets";
@@ -40,9 +47,10 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse({
         ok: true,
         service: "PROJETO LOOT",
-        version: "0.2.0",
+        version: "0.3.0",
         platform: process.platform,
         riotKeyConfigured: hasConfiguredRiotKey(),
+        defaultRiotId: config.defaultRiotId,
         riotRegion: {
           platform: config.riotPlatform,
           regional: config.riotRegional,
@@ -56,7 +64,41 @@ export async function handleRequest(req: Request): Promise<Response> {
       });
     }
 
-    // 2. Histórico das últimas 10 partidas (Camada de Dados)
+    // 2. Configurações in-app (zero .env)
+    if (req.method === "GET" && pathname === "/api/settings") {
+      return jsonResponse(getPublicSettings());
+    }
+
+    if (req.method === "POST" && pathname === "/api/settings") {
+      const body = (await req.json().catch(() => ({}))) as SettingsUpdateInput;
+      const prevPoll = config.livePollIntervalMs;
+      const updated = updateRuntimeSettings(body);
+
+      // Se o intervalo de polling mudou enquanto o Live Coach estava rodando, reinicia suavemente
+      if (
+        liveCoachService.getStatus().running &&
+        config.livePollIntervalMs !== prevPoll
+      ) {
+        liveCoachService.stop();
+        liveCoachService.start();
+      }
+
+      return jsonResponse({
+        ok: true,
+        settings: updated,
+      });
+    }
+
+    if (req.method === "POST" && pathname === "/api/settings/test-riot") {
+      const body = (await req.json().catch(() => ({}))) as {
+        riotApiKey?: string;
+        riotPlatform?: string;
+      };
+      const result = await testRiotApiKey(body.riotApiKey, body.riotPlatform);
+      return jsonResponse(result, result.valid ? 200 : 400);
+    }
+
+    // 3. Histórico das últimas 10 partidas (Camada de Dados)
     if (req.method === "GET" && pathname === "/api/matches") {
       const riotId = (url.searchParams.get("riotId") ?? "").trim();
       const queue = normalizeQueueFilter(url.searchParams.get("queue"));
@@ -105,7 +147,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       });
     }
 
-    // 3. LENTE 1: Autópsia Pós-Jogo (Camada de IA -> PostGameService)
+    // 4. LENTE 1: Autópsia Pós-Jogo (Camada de IA -> PostGameService)
     if (req.method === "POST" && pathname === "/api/analyze/post-game") {
       const body = (await req.json().catch(() => ({}))) as {
         riotId?: string;
@@ -126,7 +168,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse(result);
     }
 
-    // 4. LENTE 2: Live Coach — Rotas de Controle e Diagnóstico
+    // 5. LENTE 2: Live Coach — Rotas de Controle e Diagnóstico
     if (req.method === "GET" && pathname === "/api/live/test") {
       const snapshot = await fetchLiveClientSnapshot(true);
       return jsonResponse(snapshot);
@@ -165,7 +207,7 @@ export async function handleRequest(req: Request): Promise<Response> {
       return jsonResponse(result);
     }
 
-    // 5. Frontend estático / embutido
+    // 6. Frontend estático / embutido
     if (req.method === "GET") {
       return serveFrontendAsset(pathname);
     }
@@ -179,6 +221,8 @@ export async function handleRequest(req: Request): Promise<Response> {
           code: err.code,
           suggestMock:
             err.code === "RIOT_KEY_MISSING" || err.code === "RIOT_AUTH_ERROR",
+          suggestSettings:
+            err.code === "RIOT_KEY_MISSING" || err.code === "RIOT_AUTH_ERROR",
         },
         err.statusCode
       );
@@ -190,6 +234,7 @@ export async function handleRequest(req: Request): Promise<Response> {
           code: err.code,
           details: err.details,
           suggestMockAgy: err.code === "AGY_NOT_FOUND",
+          suggestSettings: err.code === "AGY_NOT_FOUND",
         },
         500
       );
@@ -213,23 +258,18 @@ if (import.meta.main) {
   });
 
   console.log("==========================================================");
-  console.log(`  PROJETO LOOT v0.2.0 rodando em http://localhost:${server.port}`);
+  console.log(`  PROJETO LOOT v0.3.0 rodando em http://localhost:${server.port}`);
   console.log(
     `  Riot API Key: ${
       hasConfiguredRiotKey()
         ? "CONFIGURADA"
-        : "AUSENTE (use .env ou Modo Demo)"
+        : 'NAO CONFIGURADA (abra "Configuracoes" no navegador)'
     }`
   );
   console.log(
     `  AGY CLI: ${config.agyBin} (modo: ${config.agyMode} | timeout: ${Math.round(
       config.agyTimeoutMs / 1000
     )}s)`
-  );
-  console.log(
-    `  Live Coach: polling ${Math.round(
-      config.livePollIntervalMs / 1000
-    )}s | cooldown ${Math.round(config.liveCoachCooldownMs / 1000)}s`
   );
   console.log("==========================================================");
 }

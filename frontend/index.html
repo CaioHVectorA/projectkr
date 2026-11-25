@@ -79,6 +79,19 @@
             />
             <span class="text-[#8b9bb4]">Simular AGY</span>
           </label>
+
+          <button
+            id="btnOpenSettings"
+            type="button"
+            class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#c8aa6e]/15 border border-[#c8aa6e]/45 text-[#f0e6d2] font-semibold hover:bg-[#c8aa6e]/25 transition"
+          >
+            <span>Configurações</span>
+            <span
+              id="settingsAlertDot"
+              class="hidden w-2 h-2 rounded-full bg-amber-400 animate-pulse"
+              title="Riot API Key ainda não configurada"
+            ></span>
+          </button>
         </div>
       </header>
 
@@ -150,19 +163,28 @@
           </div>
         </form>
 
-        <!-- BANNER DE ERRO / SUGESTÃO DE MOCK -->
+        <!-- BANNER DE ERRO / SUGESTÃO DE MOCK / CONFIGURAÇÕES -->
         <div
           id="errorBanner"
           class="hidden rounded-lg border border-[#e84057]/40 bg-[#e84057]/10 px-4 py-3 text-sm text-[#ffd5dc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
         >
           <div id="errorText" class="leading-relaxed"></div>
-          <button
-            id="btnQuickMock"
-            type="button"
-            class="hidden shrink-0 px-3 py-1.5 rounded-md bg-[#c8aa6e] text-[#070a0f] font-semibold text-xs hover:brightness-110 transition"
-          >
-            Ativar Modo Demo e Testar
-          </button>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              id="btnQuickSettings"
+              type="button"
+              class="hidden px-3 py-1.5 rounded-md bg-white/15 border border-white/25 text-[#f0e6d2] font-semibold text-xs hover:bg-white/25 transition"
+            >
+              Abrir Configurações
+            </button>
+            <button
+              id="btnQuickMock"
+              type="button"
+              class="hidden px-3 py-1.5 rounded-md bg-[#c8aa6e] text-[#070a0f] font-semibold text-xs hover:brightness-110 transition"
+            >
+              Ativar Modo Demo e Testar
+            </button>
+          </div>
         </div>
       </section>
 
@@ -453,6 +475,226 @@
           ></pre>
         </div>
       </section>
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÕES (100% IN-APP, ZERO .ENV) -->
+    <div
+      id="settingsModal"
+      class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+    >
+      <div
+        class="hex-panel hex-panel-accent rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-5"
+      >
+        <div class="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <div>
+            <span class="font-mono-tech text-[11px] uppercase tracking-widest text-[#c8aa6e]"
+              >Configuração Local • Sem .env</span
+            >
+            <h2 class="text-lg font-bold text-[#f0e6d2]">Configurações do PROJETO LOOT</h2>
+            <p class="text-xs text-[#8b9bb4] mt-0.5">
+              Tudo é salvo localmente no seu PC (<code class="font-mono-tech text-[#c8aa6e]">data/settings.json</code>) e aplicado na hora.
+            </p>
+          </div>
+          <button
+            id="btnCloseSettings"
+            type="button"
+            class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-xs text-[#8b9bb4] hover:text-[#f0e6d2]"
+          >
+            Fechar
+          </button>
+        </div>
+
+        <form id="settingsForm" class="space-y-5">
+          <!-- Bloco 1: Conta & Riot API -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-[#0ac8b9]">
+                1. Conta & Riot API
+              </h3>
+              <a
+                href="https://developer.riotgames.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-xs text-[#c8aa6e] hover:underline"
+                >Gerar / Renovar Riot Key (24h) ↗</a
+              >
+            </div>
+
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between">
+                <label for="cfgRiotApiKey" class="text-xs text-[#d6dde8]"
+                  >Riot Developer API Key</label
+                >
+                <span
+                  id="cfgKeyStatusLabel"
+                  class="font-mono-tech text-[11px] text-[#8b9bb4]"
+                ></span>
+              </div>
+              <div class="flex gap-2">
+                <input
+                  id="cfgRiotApiKey"
+                  type="password"
+                  placeholder="Cole sua RGAPI-... aqui (deixe vazio para manter a atual)"
+                  class="hex-input flex-1 rounded-lg px-3 py-2 text-xs font-mono-tech"
+                />
+                <button
+                  id="btnToggleKeyVisibility"
+                  type="button"
+                  class="px-3 py-2 rounded-lg bg-white/5 border border-white/15 text-xs text-[#b7c4d6] hover:text-[#f0e6d2]"
+                >
+                  Mostrar
+                </button>
+                <button
+                  id="btnTestRiotKey"
+                  type="button"
+                  class="hex-btn-secondary px-3 py-2 rounded-lg text-xs font-semibold shrink-0"
+                >
+                  Testar Chave
+                </button>
+              </div>
+              <div id="cfgKeyTestFeedback" class="hidden text-xs rounded-md px-3 py-2"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="cfgDefaultRiotId" class="block text-xs text-[#d6dde8] mb-1"
+                  >Seu Riot ID padrão</label
+                >
+                <input
+                  id="cfgDefaultRiotId"
+                  type="text"
+                  placeholder="Ex: SeuNick#BR1"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs"
+                />
+              </div>
+              <div>
+                <label for="cfgRiotPlatform" class="block text-xs text-[#d6dde8] mb-1"
+                  >Servidor</label
+                >
+                <select
+                  id="cfgRiotPlatform"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs"
+                >
+                  <option value="br1">Brasil (BR1)</option>
+                  <option value="na1">América do Norte (NA1)</option>
+                  <option value="la1">LAN (LA1)</option>
+                  <option value="la2">LAS (LA2)</option>
+                  <option value="euw1">Europa Oeste (EUW1)</option>
+                  <option value="kr">Coreia (KR)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloco 2: Motor Local AGY -->
+          <div class="space-y-3 border-t border-white/10 pt-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#0ac8b9]">
+              2. Motor Cognitivo Local (Antigravity CLI — agy)
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label for="cfgAgyBin" class="block text-xs text-[#d6dde8] mb-1"
+                  >Comando ou Caminho do agy</label
+                >
+                <input
+                  id="cfgAgyBin"
+                  type="text"
+                  placeholder="agy"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs font-mono-tech"
+                />
+              </div>
+              <div>
+                <label for="cfgAgyMode" class="block text-xs text-[#d6dde8] mb-1"
+                  >Modo de envio</label
+                >
+                <select
+                  id="cfgAgyMode"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs"
+                >
+                  <option value="arg">Argumento (-p "&lt;prompt&gt;")</option>
+                  <option value="stdin">Stdin (-p -)</option>
+                </select>
+              </div>
+              <div>
+                <label for="cfgAgyTimeoutSec" class="block text-xs text-[#d6dde8] mb-1"
+                  >Timeout máximo (seg)</label
+                >
+                <input
+                  id="cfgAgyTimeoutSec"
+                  type="number"
+                  min="15"
+                  max="300"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs font-mono-tech"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Bloco 3: Live Coach -->
+          <div class="space-y-3 border-t border-white/10 pt-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#0ac8b9]">
+              3. Live Coach (Lente 2 — Tempo Real)
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label for="cfgLivePollSec" class="block text-xs text-[#d6dde8] mb-1"
+                  >Intervalo de leitura da porta 2999 (mín. 10s)</label
+                >
+                <input
+                  id="cfgLivePollSec"
+                  type="number"
+                  min="10"
+                  max="60"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs font-mono-tech"
+                />
+              </div>
+              <div>
+                <label for="cfgLiveCooldownSec" class="block text-xs text-[#d6dde8] mb-1"
+                  >Cooldown entre avisos do AGY (seg)</label
+                >
+                <input
+                  id="cfgLiveCooldownSec"
+                  type="number"
+                  min="15"
+                  max="300"
+                  class="hex-input w-full rounded-lg px-3 py-2 text-xs font-mono-tech"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div
+            id="cfgSaveFeedback"
+            class="hidden text-xs rounded-md px-3 py-2 border"
+          ></div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-4">
+            <button
+              id="btnClearRiotKey"
+              type="button"
+              class="text-xs text-[#ff8a9b] hover:underline"
+            >
+              Remover Riot Key salva
+            </button>
+            <div class="flex items-center gap-2">
+              <button
+                id="btnCancelSettings"
+                type="button"
+                class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-xs text-[#b7c4d6] hover:text-[#f0e6d2]"
+              >
+                Cancelar
+              </button>
+              <button
+                id="btnSaveSettings"
+                type="submit"
+                class="hex-btn-primary px-5 py-2 rounded-lg text-xs"
+              >
+                Salvar Configurações
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="/app.js"></script>
