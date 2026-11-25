@@ -1,0 +1,86 @@
+name: Build & Release Windows Standalone
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag do release (ex: v0.2.0)"
+        required: true
+        default: "v0.2.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Run test suite
+        run: bun test
+
+      - name: Build Windows x64 standalone executable
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          bun run build:win
+
+      - name: Package Windows release zip
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") { "${{ inputs.tag }}" } else { "${{ github.ref_name }}" }
+          $pkgDir = "dist/projeto-loot-$tag-win-x64"
+          New-Item -ItemType Directory -Force -Path $pkgDir | Out-Null
+
+          Copy-Item "dist/projeto-loot-win-x64.exe" "$pkgDir/projeto-loot-win-x64.exe"
+          Copy-Item ".env.example" "$pkgDir/.env.example"
+          Copy-Item "README.md" "$pkgDir/README.md"
+
+          $bat = @"
+          @echo off
+          title PROJETO LOOT - Coach Tatico Local (BR1)
+          echo Iniciando PROJETO LOOT em http://localhost:3000 ...
+          start "" cmd /c "timeout /t 2 /nobreak >nul && start http://localhost:3000"
+          "%~dp0projeto-loot-win-x64.exe"
+          pause
+          "@
+          Set-Content -Path "$pkgDir/INICIAR_PROJETO_LOOT.bat" -Value $bat -Encoding ASCII
+
+          $zipPath = "dist/projeto-loot-$tag-win-x64.zip"
+          Compress-Archive -Path $pkgDir -DestinationPath $zipPath -Force
+          Write-Output "TAG=$tag" >> $env:GITHUB_ENV
+          Write-Output "ZIP_PATH=$zipPath" >> $env:GITHUB_ENV
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $notes = @"
+          ## PROJETO LOOT $env:TAG (Windows x64 Standalone)
+
+          Versão empacotada para teste rápido no Windows 10/11 — **sem precisar instalar Bun ou Node.js** (frontend e mocks já estão embutidos no executável).
+
+          ### Como testar em 3 passos (Windows 10/11)
+          1. Baixe e extraia ``projeto-loot-$env:TAG-win-x64.zip``.
+          2. *(Opcional)* Copie ``.env.example`` para ``.env`` e informe sua ``RIOT_API_KEY`` (sem chave, você já consegue testar tudo usando **Modo Demo (Mock)** e **Simular Evento Live**).
+          3. Dê dois cliques em ``INICIAR_PROJETO_LOOT.bat`` (ou execute ``projeto-loot-win-x64.exe`` e abra ``http://localhost:3000``).
+
+          ### O que está incluído
+          - **Arquitetura em Camadas:** Camada de Dados (``backend/data/``), Camada de Domínio (``backend/domain/``), Camada de IA (``backend/ai/``) e Camada HTTP (``backend/http/``).
+          - **Lente 1 — Autópsia Pós-Jogo:** busca por Riot ID (BR1), histórico das últimas 10 partidas com filtro de fila, Data Dragon ``pt_BR`` em cache local, condensador determinístico da Timeline (``< 6KB``) e 4 blocos analíticos via CLI local ``agy``.
+          - **Lente 2 — Live Coach (Read-Only):** polling a cada ``12s`` em ``https://127.0.0.1:2999``, loop silencioso com cooldown de ``60s`` disparado apenas por deltas acionáveis, avisos de **no máximo 2 linhas**, botão **MUTE**, histórico de avisos e botão **Simular Evento Live**.
+          "@
+          gh release create "$env:TAG" "$env:ZIP_PATH" `
+            --title "PROJETO LOOT $env:TAG — Lente 1 (Autópsia Pós-Jogo) + Lente 2 (Live Coach)" `
+            --notes $notes
